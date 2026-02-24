@@ -18,7 +18,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final MobileScannerController _scannerController = MobileScannerController();
 
   // QRCode válido precisa ter este valor textual.
-  final String _validCode = 'SALA_ISTEC_2026';
+  final Set<String> _validCodes = {
+    'EVENTO-TECNOLOGIA-2026',
+    'WORKSHOP-FLUTTER-2026',
+    'PALESTRA-INTELIGENCIA-ARTIFICIAL-2026',
+    };
 
   bool _isProcessing = false;
   bool _dialogOpen = false;
@@ -44,7 +48,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
-  
+  // Exibe um dialog de erro com título, mensagem e opcionalmente um botão para abrir as configurações de localização do dispositivo.
   Future<void> _showError(
     String title,
     String message, {
@@ -81,6 +85,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _dialogOpen = false;
   }
 
+  // Gerencia o processo de detecção do QR code, valida o código, verifica a localização e registra o check-in no histórico do app.
   void _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
     _isProcessing = true;
@@ -91,7 +96,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
     try {
       final code = capture.barcodes.first.rawValue;
 
-      if (code == null || code != _validCode) {
+      // Valida o código do QR code. Se for inválido, exibe um dialog de erro e retorna.
+      if (code == null || !_validCodes.contains(code)) {
         await _showError(
           'QR Code inválido',
           'Este código não pertence ao ISTEC.',
@@ -99,6 +105,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         return;
       }
 
+      // Caso válido verifica a localização do usuário. Se estiver fora do raio permitido, exibe um dialog de erro e retorna.
       final pos = await GeoHelper.determinePosition();
       final dist = GeoHelper.calculateDistance(
         pos.latitude,

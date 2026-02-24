@@ -1,10 +1,7 @@
 
 import { Coordinates } from '../types';
 
-/**
- * Calcula a distância entre dois pontos geográficos em metros utilizando a fórmula de Haversine.
- * Útil para validação de proximidade em sistemas de check-in.
- */
+/// Calcula a distância entre duas coordenadas geográficas usando a fórmula de Haversine.
 export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): number => {
   const R = 6371e3; // Raio da Terra em metros
   const phi1 = (coord1.latitude * Math.PI) / 180;
@@ -21,10 +18,7 @@ export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): num
   return R * c; // Distância em metros
 };
 
-/**
- * Obtém a localização atual do dispositivo através da API nativa do browser.
- * Nota: Requer permissões de 'geolocation' configuradas no manifest/metadata.
- */
+// Obtém a posição atual do usuário usando a API de Geolocalização do navegador.
 export const getCurrentPosition = (): Promise<Coordinates> => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
