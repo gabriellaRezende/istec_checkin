@@ -7,7 +7,7 @@ class GeoHelper {
   // Coordenadas do local do evento e raio permitido para check-in. Para o exemplo o local é fixo. Mas como evolução pode ser implementado uma logca de cadastro de eventos onde cada evento tem suas coordenadas e raio especifico. E esses valores se tornam dinamicos.
   static const double targetLat = 38.745; 
   static const double targetLng = -9.134;
-  static const double radiusMeters = 100.0;
+  static const double radiusMeters = 200.0;
 
   static Future<Position> determinePosition() async {
     bool serviceEnabled;
