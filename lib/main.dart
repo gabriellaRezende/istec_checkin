@@ -1,21 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:istec_checkin/providers/app_state.dart';
-import 'package:istec_checkin/screens/login_screen.dart';
-import 'package:istec_checkin/screens/dashboard_screen.dart';
-import 'package:istec_checkin/screens/history_screen.dart';
+import 'package:istec_checkin/mobile/providers/app_state.dart';
+import 'package:istec_checkin/mobile/screens/login_screen.dart';
+import 'package:istec_checkin/mobile/screens/dashboard_screen.dart';
+import 'package:istec_checkin/mobile/screens/history_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // inicializa o flutter e o sistema nativo.
-  runApp(
-    // Inicia com o multiprovider que injeta o AppState para a aplicação.
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppState()), // Toda a aplicação terá acesso ao AppState, que gerencia o estado global.
-      ],
-      child: const IstecApp(),
-    ),
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://rfwqyvuqucithqmbyotf.supabase.co',
+    anonKey: 'sb_publishable_eRKuZ6VMOdEGISunf7DZQA_QZIKnzkt',
   );
+
+  runApp(
+    kIsWeb ? const AdminApp() : const IstecApp(),
+  );
+}
+
+class AdminApp extends StatelessWidget {
+  const AdminApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ISTEC Admin',
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(title: const Text("ISTEC Admin")),
+        body: const Center(
+          child: Text("Painel Web em construção"),
+        ),
+      ),
+    );
+  }
 }
 
 

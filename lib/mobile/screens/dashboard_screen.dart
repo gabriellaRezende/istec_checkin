@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:istec_checkin/providers/app_state.dart';
+import 'package:istec_checkin/mobile/providers/app_state.dart';
 import 'scanner_screen.dart';
 
 String formatDateTimePt(DateTime dt) {

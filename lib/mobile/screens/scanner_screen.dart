@@ -3,9 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
-import 'package:istec_checkin/models/check_in.dart';
-import 'package:istec_checkin/providers/app_state.dart';
-import 'package:istec_checkin/utils/geo_helper.dart';
+import 'package:istec_checkin/shared/models/check_in.dart';
+import 'package:istec_checkin/mobile/providers/app_state.dart';
+import 'package:istec_checkin/shared/utils/geo_helper.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});

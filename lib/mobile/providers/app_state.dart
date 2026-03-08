@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/check_in.dart';
+import '../../shared/models/check_in.dart';
 
 // AppState é a classe que gerencia o estado global da aplicação, incluindo o status de autenticação do usuário e o histórico de check-ins. Ela utiliza ChangeNotifier para notificar os widgets que dependem desses dados quando houver mudanças, permitindo uma atualização reativa da interface do usuário.
 class AppState with ChangeNotifier {
