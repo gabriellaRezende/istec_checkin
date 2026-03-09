@@ -30,8 +30,44 @@ class AdminApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(title: const Text("ISTEC Admin")),
-        body: const Center(
-          child: Text("Painel Web em construção"),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Painel Web em construção"),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final response = await Supabase.instance.client
+                        .from('events')
+                        .select();
+
+                    debugPrint('Supabase OK: $response');
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Ligação OK! Registos encontrados: ${response.length}'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    debugPrint('Erro Supabase: $e');
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Erro ao ligar ao Supabase: $e'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Testar Supabase'),
+              ),
+            ],
+          ),
         ),
       ),
     );
