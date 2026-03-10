@@ -246,6 +246,54 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
+                            'Eventos em Andamento',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (data.ongoingEvents.isEmpty)
+                            const Text(
+                              'Nenhum evento em andamento neste momento.',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            ...data.ongoingEvents.map(
+                              (event) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const CircleAvatar(
+                                    child: Icon(Icons.play_circle_outline),
+                                  ),
+                                  title: Text(event.name),
+                                  subtitle: Text(
+                                    '${event.formattedDate} • ${event.formattedTimeRange}',
+                                  ),
+                                  trailing: Text(
+                                    event.status,
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BrandTheme.softPanel(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
                             'Próximos Eventos',
                             style: TextStyle(
                               fontSize: 20,
@@ -353,6 +401,7 @@ class _DashboardData {
   final int checkinsToday;
   final int approvedCheckins;
   final int rejectedCheckins;
+  final List<_DashboardEventItem> ongoingEvents;
   final List<_UpcomingEvent> upcomingEvents;
 
   const _DashboardData({
@@ -360,6 +409,7 @@ class _DashboardData {
     required this.checkinsToday,
     required this.approvedCheckins,
     required this.rejectedCheckins,
+    required this.ongoingEvents,
     required this.upcomingEvents,
   });
 
@@ -369,6 +419,7 @@ class _DashboardData {
       checkinsToday: 0,
       approvedCheckins: 0,
       rejectedCheckins: 0,
+      ongoingEvents: [],
       upcomingEvents: [],
     );
   }
@@ -447,6 +498,39 @@ class _DashboardData {
       return status == 'rejected';
     }).length;
 
+    final ongoing = events
+        .map((event) {
+          final name = (event['name'] ?? 'Evento sem nome').toString();
+          final status = (event['status'] ?? '-').toString();
+          final rawStartDate = (event['start_date'] ?? '').toString();
+          final rawStartTime = (event['start_time'] ?? '').toString();
+          final rawEndDate = (event['end_date'] ?? '').toString();
+          final rawEndTime = (event['end_time'] ?? '').toString();
+
+          final startDateTime = _parseEventDateTime(rawStartDate, rawStartTime);
+          final endDateTime = _parseEventDateTime(rawEndDate, rawEndTime);
+          final isActive = status.toLowerCase() == 'active';
+
+          if (!isActive || startDateTime == null || endDateTime == null) {
+            return null;
+          }
+
+          if (now.isBefore(startDateTime) || now.isAfter(endDateTime)) {
+            return null;
+          }
+
+          return _DashboardEventItem(
+            name: name,
+            startDateTime: startDateTime,
+            endDateTime: endDateTime,
+            status: status,
+          );
+        })
+        .whereType<_DashboardEventItem>()
+        .toList();
+
+    ongoing.sort((a, b) => a.endDateTime.compareTo(b.endDateTime));
+
     final upcoming = events
         .map((event) {
           final name = (event['name'] ?? 'Evento sem nome').toString();
@@ -474,6 +558,7 @@ class _DashboardData {
       checkinsToday: checkinsToday,
       approvedCheckins: approvedCheckins,
       rejectedCheckins: rejectedCheckins,
+      ongoingEvents: ongoing.take(5).toList(),
       upcomingEvents: upcoming.take(5).toList(),
     );
   }
@@ -508,5 +593,34 @@ class _UpcomingEvent {
     final hour = startDateTime.hour.toString().padLeft(2, '0');
     final minute = startDateTime.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+}
+
+class _DashboardEventItem {
+  final String name;
+  final DateTime startDateTime;
+  final DateTime endDateTime;
+  final String status;
+
+  const _DashboardEventItem({
+    required this.name,
+    required this.startDateTime,
+    required this.endDateTime,
+    required this.status,
+  });
+
+  String get formattedDate {
+    final day = startDateTime.day.toString().padLeft(2, '0');
+    final month = startDateTime.month.toString().padLeft(2, '0');
+    final year = startDateTime.year.toString();
+    return '$day/$month/$year';
+  }
+
+  String get formattedTimeRange {
+    final startHour = startDateTime.hour.toString().padLeft(2, '0');
+    final startMinute = startDateTime.minute.toString().padLeft(2, '0');
+    final endHour = endDateTime.hour.toString().padLeft(2, '0');
+    final endMinute = endDateTime.minute.toString().padLeft(2, '0');
+    return '$startHour:$startMinute - $endHour:$endMinute';
   }
 }
