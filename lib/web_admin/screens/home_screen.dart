@@ -3,11 +3,114 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:istec_checkin/web_admin/widgets/top_navigation.dart';
 import 'package:istec_checkin/web_admin/screens/events_screen.dart';
 import 'package:istec_checkin/web_admin/screens/requests_screen.dart';
+import 'package:istec_checkin/web_admin/widgets/create_event_modal.dart';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
 
-class AdminHomeScreen extends StatelessWidget {
+import 'package:qr_flutter/qr_flutter.dart';
+
+class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
+
+  @override
+  State<AdminHomeScreen> createState() => _AdminHomeScreenState();
+}
+
+class _AdminHomeScreenState extends State<AdminHomeScreen> {
+  late Future<_DashboardData> _dashboardFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _dashboardFuture = _DashboardData.load();
+  }
+
+  Future<void> _reloadDashboard() async {
+    setState(() {
+      _dashboardFuture = _DashboardData.load();
+    });
+  }
+
+  Future<void> _showEventCreatedDialog(Map<String, dynamic> event) async {
+    final name = (event['name'] ?? '').toString();
+    final address = (event['adress'] ?? '').toString();
+    final startDate = (event['start_date'] ?? '').toString();
+    final startTime = (event['start_time'] ?? '').toString();
+    final endDate = (event['end_date'] ?? '').toString();
+    final endTime = (event['end_time'] ?? '').toString();
+    final radius = (event['radius_meters'] ?? '').toString();
+
+    final qrData = 'ISTEC_EVENT:${event['id']}';
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return Dialog(
+          child: SizedBox(
+            width: 650,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Evento criado com sucesso',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Nome: $name'),
+                            const SizedBox(height: 8),
+                            Text('Morada: $address'),
+                            const SizedBox(height: 8),
+                            Text('Início: $startDate às ${startTime.length >= 5 ? startTime.substring(0,5) : startTime}'),
+                            const SizedBox(height: 8),
+                            Text('Fim: $endDate às ${endTime.length >= 5 ? endTime.substring(0,5) : endTime}'),
+                            const SizedBox(height: 8),
+                            Text('Raio permitido: $radius metros'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Column(
+                        children: [
+                          const Text(
+                            'QR Code',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          QrImageView(
+                            data: qrData,
+                            version: QrVersions.auto,
+                            size: 200,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Fechar'),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,18 +136,27 @@ class AdminHomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Modal de criação do evento será o próximo passo.'),
-            ),
+        onPressed: () async {
+          final event = await showDialog(
+            context: context,
+            builder: (_) => const CreateEventModal(),
           );
+
+          if (event != null) {
+            if (!mounted) return;
+
+            await _reloadDashboard();
+
+            if (!mounted) return;
+
+            await _showEventCreatedDialog(Map<String, dynamic>.from(event));
+          }
         },
         icon: const Icon(Icons.add),
         label: const Text('Novo Evento'),
       ),
       body: FutureBuilder<_DashboardData>(
-        future: _DashboardData.load(),
+        future: _dashboardFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -64,10 +176,10 @@ class AdminHomeScreen extends StatelessWidget {
 
           final data = snapshot.data ?? _DashboardData.empty();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return RefreshIndicator(
+            onRefresh: _reloadDashboard,
+            child: ListView(
+              padding: const EdgeInsets.all(24),
               children: [
                 const Text(
                   'Visão Geral do Sistema',
@@ -136,13 +248,12 @@ class AdminHomeScreen extends StatelessWidget {
                                 ),
                                 title: Text(event.name),
                                 subtitle: Text(
-                                  '${event.startDate} às ${event.startTime}',
+                                  '${event.formattedDate} às ${event.formattedTime}',
                                 ),
                                 trailing: Text(
                                   event.status,
                                   style: TextStyle(
-                                    color:
-                                        event.status.toLowerCase() == 'active'
+                                    color: event.status.toLowerCase() == 'active'
                                         ? Colors.green
                                         : Colors.grey,
                                     fontWeight: FontWeight.w600,
@@ -268,21 +379,27 @@ class _DashboardData {
       return status == 'rejected';
     }).length;
 
-    final upcoming = events.map((event) {
-      return _UpcomingEvent(
-        name: (event['name'] ?? 'Evento sem nome').toString(),
-        startDate: (event['start_date'] ?? '-').toString(),
-        startTime: (event['start_time'] ?? '-').toString(),
-        status: (event['status'] ?? '-').toString(),
-      );
-    }).toList();
+    final upcoming = events
+        .map((event) {
+          final name = (event['name'] ?? 'Evento sem nome').toString();
+          final status = (event['status'] ?? '-').toString();
+          final rawDate = (event['start_date'] ?? '').toString();
+          final rawTime = (event['start_time'] ?? '').toString();
 
-    upcoming.sort((a, b) {
-      final aDate = '${a.startDate} ${a.startTime}';
-      final bDate = '${b.startDate} ${b.startTime}';
+          final startDateTime = _parseEventDateTime(rawDate, rawTime);
+          if (startDateTime == null) return null;
+          if (startDateTime.isBefore(now)) return null;
 
-      return aDate.compareTo(bDate);
-    });
+          return _UpcomingEvent(
+            name: name,
+            startDateTime: startDateTime,
+            status: status,
+          );
+        })
+        .whereType<_UpcomingEvent>()
+        .toList();
+
+    upcoming.sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
 
     return _DashboardData(
       activeEvents: activeEvents,
@@ -292,18 +409,36 @@ class _DashboardData {
       upcomingEvents: upcoming.take(5).toList(),
     );
   }
+
+  static DateTime? _parseEventDateTime(String rawDate, String rawTime) {
+    if (rawDate.isEmpty || rawTime.isEmpty) return null;
+
+    final normalizedTime = rawTime.length == 5 ? '$rawTime:00' : rawTime;
+    return DateTime.tryParse('${rawDate}T$normalizedTime');
+  }
 }
 
 class _UpcomingEvent {
   final String name;
-  final String startDate;
-  final String startTime;
+  final DateTime startDateTime;
   final String status;
 
   const _UpcomingEvent({
     required this.name,
-    required this.startDate,
-    required this.startTime,
+    required this.startDateTime,
     required this.status,
   });
+
+  String get formattedDate {
+    final day = startDateTime.day.toString().padLeft(2, '0');
+    final month = startDateTime.month.toString().padLeft(2, '0');
+    final year = startDateTime.year.toString();
+    return '$day/$month/$year';
+  }
+
+  String get formattedTime {
+    final hour = startDateTime.hour.toString().padLeft(2, '0');
+    final minute = startDateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
 }

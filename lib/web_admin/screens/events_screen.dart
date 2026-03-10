@@ -1,17 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:istec_checkin/web_admin/widgets/top_navigation.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/web_admin/screens/events_details_screen.dart';
+
 import 'home_screen.dart';
 import 'requests_screen.dart';
 
-class EventsScreen extends StatelessWidget {
+class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<EventsScreen> createState() => _EventsScreenState();
+}
+
+class _EventsScreenState extends State<EventsScreen> {
+  late Future<List<Map<String, dynamic>>> _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsFuture = _loadEvents();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadEvents() async {
     final supabase = Supabase.instance.client;
 
+    final response = await supabase
+        .from('events')
+        .select()
+        .order('start_date', ascending: true)
+        .order('start_time', ascending: true);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _eventsFuture = _loadEvents();
+    });
+  }
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+
+    final d = parsed.day.toString().padLeft(2, '0');
+    final m = parsed.month.toString().padLeft(2, '0');
+    final y = parsed.year.toString();
+
+    return "$d/$m/$y";
+  }
+
+  String _formatTime(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    return raw.length >= 5 ? raw.substring(0, 5) : raw;
+  }
+
+  Color _statusColor(String status) {
+    if (status == 'active') return Colors.green;
+    if (status == 'inactive') return Colors.grey;
+    return Colors.blueGrey;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: TopNavigation(
         currentSection: AdminSection.events,
@@ -32,43 +88,82 @@ class EventsScreen extends StatelessWidget {
           await AuthService.signOutAndRedirect(context);
         },
       ),
-      body: FutureBuilder(
-        future: supabase.from('events').select(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _eventsFuture,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final events = snapshot.data as List;
-
-          if (events.isEmpty) {
-            return const Center(child: Text("Nenhum evento cadastrado."));
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Erro ao carregar eventos: ${snapshot.error}'),
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(24),
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              final event = events[index];
+          final events = snapshot.data ?? [];
 
-              return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.event),
-                  title: Text(event['name'] ?? 'Evento'),
-                  subtitle: Text(
-                    "${event['start_date'] ?? ''} • ${event['location'] ?? ''}",
-                  ),
-                  trailing: Text(
-                    event['status'] ?? '',
-                    style: TextStyle(
-                      color: event['status'] == 'active'
-                          ? Colors.green
-                          : Colors.grey,
+          if (events.isEmpty) {
+            return const Center(child: Text('Nenhum evento cadastrado.'));
+          }
+
+          return RefreshIndicator(
+            onRefresh: _reload,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(24),
+              itemCount: events.length,
+              itemBuilder: (context, index) {
+                final event = events[index];
+
+                final name = event['name'] ?? 'Evento';
+                final address = event['adress'] ?? '';
+                final status = (event['status'] ?? '').toString();
+
+                final startDate = _formatDate(event['start_date']);
+                final startTime = _formatTime(event['start_time']);
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EventDetailScreen(event: event),
+                        ),
+                      );
+                    },
+                    leading: const CircleAvatar(child: Icon(Icons.event)),
+                    title: Text(name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("$startDate às $startTime"),
+                        if (address.isNotEmpty)
+                          Text(
+                            address,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          status,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _statusColor(status),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right, size: 16),
+                      ],
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
       ),
