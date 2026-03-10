@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:istec_checkin/web_admin/widgets/top_navigation.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 import 'package:istec_checkin/web_admin/screens/events_details_screen.dart';
 
 import 'home_screen.dart';
@@ -62,8 +63,9 @@ class _EventsScreenState extends State<EventsScreen> {
       if (status != 'active') continue;
       if (rawEndDate == null || rawEndTime == null) continue;
 
-      final normalizedTime =
-          rawEndTime.length == 5 ? '$rawEndTime:00' : rawEndTime;
+      final normalizedTime = rawEndTime.length == 5
+          ? '$rawEndTime:00'
+          : rawEndTime;
 
       final endDateTime = DateTime.tryParse('${rawEndDate}T$normalizedTime');
 
@@ -143,67 +145,78 @@ class _EventsScreenState extends State<EventsScreen> {
             return const Center(child: Text('Nenhum evento cadastrado.'));
           }
 
-          return RefreshIndicator(
-            onRefresh: _reload,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: events.length,
-              itemBuilder: (context, index) {
-                final event = events[index];
+          return Container(
+            decoration: BrandTheme.screenBackground(),
+            child: RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(24),
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  final event = events[index];
 
-                final name = event['name'] ?? 'Evento';
-                final address = event['adress'] ?? '';
-                final status = (event['status'] ?? '').toString();
+                  final name = event['name'] ?? 'Evento';
+                  final address = event['adress'] ?? '';
+                  final status = (event['status'] ?? '').toString();
 
-                final startDate = _formatDate(event['start_date']);
-                final startTime = _formatTime(event['start_time']);
+                  final startDate = _formatDate(event['start_date']);
+                  final startTime = _formatTime(event['start_time']);
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EventDetailScreen(event: event),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BrandTheme.softPanel(),
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EventDetailScreen(event: event),
+                          ),
+                        );
+                      },
+                      leading: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: BrandTheme.sky,
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                      );
-                    },
-                    leading: const CircleAvatar(child: Icon(Icons.event)),
-                    title: Text(name),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("$startDate às $startTime"),
-                        if (address.isNotEmpty)
+                        child: const Icon(Icons.event, color: BrandTheme.navy),
+                      ),
+                      title: Text(name),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("$startDate às $startTime"),
+                          if (address.isNotEmpty)
+                            Text(
+                              address,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            address,
-                            style: const TextStyle(color: Colors.grey),
+                            status,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _statusColor(status),
+                            ),
                           ),
-                      ],
+                          const SizedBox(width: 8),
+                          const Icon(Icons.chevron_right, size: 16),
+                        ],
+                      ),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          status,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _statusColor(status),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right, size: 16),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           );
         },
       ),
     );
   }
-
 }

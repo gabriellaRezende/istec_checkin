@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:istec_checkin/mobile/providers/app_state.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 import 'scanner_screen.dart';
 
 String formatDateTimePt(DateTime dt) {
@@ -25,35 +26,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       context.read<AppState>().refreshHistory();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final history = context.watch<AppState>().history;
     final lastRecord = history.isNotEmpty ? history.first : null;
     final statusText = lastRecord == null
         ? ''
         : lastRecord.isApproved
-            ? 'Aprovado'
-            : lastRecord.isRejected
-                ? 'Rejeitado'
-                : 'Pendente';
+        ? 'Aprovado'
+        : lastRecord.isRejected
+        ? 'Rejeitado'
+        : 'Pendente';
     final statusColor = lastRecord == null
         ? Colors.grey
-        : lastRecord.isApproved
-            ? Colors.green
-            : lastRecord.isRejected
-                ? Colors.red
-                : Colors.orange;
+        : BrandTheme.statusColor(statusText);
     final statusIcon = lastRecord == null
         ? Icons.help_outline
         : lastRecord.isApproved
-            ? Icons.check_circle
-            : lastRecord.isRejected
-                ? Icons.cancel
-                : Icons.hourglass_top;
+        ? Icons.check_circle
+        : lastRecord.isRejected
+        ? Icons.cancel
+        : Icons.hourglass_top;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,80 +61,157 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => context.read<AppState>().logout(),
-          )
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Container(
+        decoration: BrandTheme.screenBackground(),
+        child: ListView(
+          padding: const EdgeInsets.all(24),
           children: [
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
-                    SizedBox(height: 12),
-                    Text('Bem-vindo, Aluno ISTEC', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('ID: 2024517', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
+            Container(
+              decoration: BrandTheme.softPanel(color: BrandTheme.navy),
+              padding: const EdgeInsets.all(22),
+              child: Row(
+                children: [
+                  Container(
+                    height: 64,
+                    width: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bem-vindo, Aluno ISTEC',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'ID: 2024517',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(24),
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              icon: const Icon(Icons.qr_code_scanner, size: 32),
-              label: const Text('REALIZAR CHECK-IN', style: TextStyle(fontSize: 16)),
-              onPressed: () => Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (_) => const ScannerScreen())
-              ),
-            ),
-
-
-            const SizedBox(height: 40),
-            const Text('Última Atividade', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            if (history.isNotEmpty)
-              ListTile(
-                leading: Icon(statusIcon, color: statusColor),
-                title: Text(
-                  lastRecord!.code,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
+            const SizedBox(height: 22),
+            Container(
+              decoration: BrandTheme.softPanel(),
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Presença rápida',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Use o scanner para validar a sua entrada no evento.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 24),
+                      label: const Text(
+                        'REALIZAR CHECK-IN',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ScannerScreen(),
+                        ),
                       ),
                     ),
-                    Text(formatDateTimePt(lastRecord.timestamp)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Última Atividade',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (history.isNotEmpty)
+              Container(
+                decoration: BrandTheme.softPanel(),
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Container(
+                      height: 48,
+                      width: 48,
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(statusIcon, color: statusColor),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            lastRecord!.code,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            statusText,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            formatDateTimePt(lastRecord.timestamp),
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                tileColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
               )
-            else
-              const Center(
-                child: Text(
+            else ...[
+              Container(
+                decoration: BrandTheme.softPanel(),
+                padding: const EdgeInsets.all(20),
+                child: const Text(
                   'Nenhum registro hoje',
                   style: TextStyle(color: Colors.grey),
                 ),
               ),
+            ],
           ],
         ),
       ),

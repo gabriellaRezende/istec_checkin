@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 
-enum AdminSection {
-  dashboard,
-  events,
-  requests,
-}
+enum AdminSection { dashboard, events, requests }
 
 class TopNavigation extends StatelessWidget implements PreferredSizeWidget {
   final AdminSection currentSection;
@@ -25,35 +22,45 @@ class TopNavigation extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(72);
+  Size get preferredSize => const Size.fromHeight(88);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      toolbarHeight: 88,
       title: Text(title),
+      flexibleSpace: Container(decoration: BrandTheme.screenBackground()),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: BrandTheme.line),
+      ),
       actions: [
-        _TopNavItem(
-          label: 'Dashboard',
-          selected: currentSection == AdminSection.dashboard,
-          onPressed: onDashboard,
-        ),
-        _TopNavItem(
-          label: 'Eventos',
-          selected: currentSection == AdminSection.events,
-          onPressed: onEvents,
-        ),
-        _TopNavItem(
-          label: 'Solicitações',
-          selected: currentSection == AdminSection.requests,
-          onPressed: onRequests,
-        ),
-        const SizedBox(width: 8),
         Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: OutlinedButton.icon(
-            onPressed: onSignOut,
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign out'),
+          padding: const EdgeInsets.only(right: 20),
+          child: Row(
+            children: [
+              _TopNavItem(
+                label: 'Dashboard',
+                selected: currentSection == AdminSection.dashboard,
+                onPressed: onDashboard,
+              ),
+              _TopNavItem(
+                label: 'Eventos',
+                selected: currentSection == AdminSection.events,
+                onPressed: onEvents,
+              ),
+              _TopNavItem(
+                label: 'Solicitações',
+                selected: currentSection == AdminSection.requests,
+                onPressed: onRequests,
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: onSignOut,
+                icon: const Icon(Icons.logout),
+                label: const Text('Sign out'),
+              ),
+            ],
           ),
         ),
       ],
@@ -81,14 +88,16 @@ class _TopNavItem extends StatelessWidget {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          foregroundColor: selected
-              ? colorScheme.onPrimaryContainer
-              : colorScheme.primary,
-          backgroundColor:
-              selected ? colorScheme.primaryContainer : Colors.transparent,
+          foregroundColor: selected ? Colors.white : colorScheme.primary,
+          backgroundColor: selected
+              ? BrandTheme.navy
+              : Colors.white.withValues(alpha: 0.7),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: selected ? BrandTheme.navy : BrandTheme.line,
+            ),
           ),
           textStyle: TextStyle(
             fontWeight: selected ? FontWeight.bold : FontWeight.w500,

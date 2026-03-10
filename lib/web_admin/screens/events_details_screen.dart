@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 import 'package:istec_checkin/web_admin/screens/home_screen.dart';
 import 'package:istec_checkin/web_admin/screens/events_screen.dart';
 import 'package:istec_checkin/web_admin/screens/requests_screen.dart';
@@ -309,264 +310,279 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               )
               .length;
 
-          return RefreshIndicator(
-            onRefresh: _reload,
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
+          return Container(
+            decoration: BrandTheme.screenBackground(),
+            child: RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          decoration: BrandTheme.softPanel(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              _InfoRow(label: 'Morada', value: address),
-                              _InfoRow(
-                                label: 'Início',
-                                value: '$startDate às $startTime',
-                              ),
-                              _InfoRow(
-                                label: 'Fim',
-                                value: '$endDate às $endTime',
-                              ),
-                              _InfoRow(
-                                label: 'Raio permitido',
-                                value: '$radius m',
-                              ),
-                              _InfoRow(label: 'Latitude', value: latitude),
-                              _InfoRow(label: 'Longitude', value: longitude),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Estado: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
+                                const SizedBox(height: 12),
+                                _InfoRow(label: 'Morada', value: address),
+                                _InfoRow(
+                                  label: 'Início',
+                                  value: '$startDate às $startTime',
+                                ),
+                                _InfoRow(
+                                  label: 'Fim',
+                                  value: '$endDate às $endTime',
+                                ),
+                                _InfoRow(
+                                  label: 'Raio permitido',
+                                  value: '$radius m',
+                                ),
+                                _InfoRow(label: 'Latitude', value: latitude),
+                                _InfoRow(label: 'Longitude', value: longitude),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Estado: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    status,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: _statusColor(status),
+                                    Text(
+                                      status,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: _statusColor(status),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Container(
+                          decoration: BrandTheme.softPanel(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                const Text(
+                                  'QR Code',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: BrandTheme.mist,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: QrImageView(
+                                    data: _qrData,
+                                    version: QrVersions.auto,
+                                    size: 220,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Este QR identifica o evento para o check-in no app mobile.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Resumo do Evento',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _SummaryCard(
+                        title: 'Total',
+                        value: total.toString(),
+                        color: Colors.blue,
+                      ),
+                      _SummaryCard(
+                        title: 'Aprovados',
+                        value: approved.toString(),
+                        color: Colors.green,
+                      ),
+                      _SummaryCard(
+                        title: 'Rejeitados',
+                        value: rejected.toString(),
+                        color: Colors.red,
+                      ),
+                      _SummaryCard(
+                        title: 'Pendentes',
+                        value: pending.toString(),
+                        color: Colors.orange,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BrandTheme.softPanel(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Gráfico de Check-ins',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _ChartBarRow(
+                            label: 'Aprovados',
+                            value: approved,
+                            total: total,
+                            color: Colors.green,
+                            ratio: _safeRatio(approved, total),
+                          ),
+                          const SizedBox(height: 12),
+                          _ChartBarRow(
+                            label: 'Rejeitados',
+                            value: rejected,
+                            total: total,
+                            color: Colors.red,
+                            ratio: _safeRatio(rejected, total),
+                          ),
+                          const SizedBox(height: 12),
+                          _ChartBarRow(
+                            label: 'Pendentes',
+                            value: pending,
+                            total: total,
+                            color: Colors.orange,
+                            ratio: _safeRatio(pending, total),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BrandTheme.softPanel(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'QR Code',
+                                'Check-ins',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              QrImageView(
-                                data: _qrData,
-                                version: QrVersions.auto,
-                                size: 220,
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Este QR identifica o evento para o check-in no app mobile.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  await _exportPdf(
+                                    name: name,
+                                    address: address,
+                                    startDate: startDate,
+                                    startTime: startTime,
+                                    endDate: endDate,
+                                    endTime: endTime,
+                                    status: status,
+                                    radius: radius,
+                                    total: total,
+                                    approved: approved,
+                                    rejected: rejected,
+                                    pending: pending,
+                                    checkins: checkins,
+                                  );
+                                },
+                                icon: const Icon(Icons.picture_as_pdf),
+                                label: const Text('Exportar PDF'),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Resumo do Evento',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    _SummaryCard(
-                      title: 'Total',
-                      value: total.toString(),
-                      color: Colors.blue,
-                    ),
-                    _SummaryCard(
-                      title: 'Aprovados',
-                      value: approved.toString(),
-                      color: Colors.green,
-                    ),
-                    _SummaryCard(
-                      title: 'Rejeitados',
-                      value: rejected.toString(),
-                      color: Colors.red,
-                    ),
-                    _SummaryCard(
-                      title: 'Pendentes',
-                      value: pending.toString(),
-                      color: Colors.orange,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Gráfico de Check-ins',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _ChartBarRow(
-                          label: 'Aprovados',
-                          value: approved,
-                          total: total,
-                          color: Colors.green,
-                          ratio: _safeRatio(approved, total),
-                        ),
-                        const SizedBox(height: 12),
-                        _ChartBarRow(
-                          label: 'Rejeitados',
-                          value: rejected,
-                          total: total,
-                          color: Colors.red,
-                          ratio: _safeRatio(rejected, total),
-                        ),
-                        const SizedBox(height: 12),
-                        _ChartBarRow(
-                          label: 'Pendentes',
-                          value: pending,
-                          total: total,
-                          color: Colors.orange,
-                          ratio: _safeRatio(pending, total),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
+                          const SizedBox(height: 16),
+                          if (checkins.isEmpty)
                             const Text(
-                              'Check-ins',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                await _exportPdf(
-                                  name: name,
-                                  address: address,
-                                  startDate: startDate,
-                                  startTime: startTime,
-                                  endDate: endDate,
-                                  endTime: endTime,
-                                  status: status,
-                                  radius: radius,
-                                  total: total,
-                                  approved: approved,
-                                  rejected: rejected,
-                                  pending: pending,
-                                  checkins: checkins,
-                                );
-                              },
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('Exportar PDF'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        if (checkins.isEmpty)
-                          const Text(
-                            'Nenhum check-in encontrado para este evento.',
-                            style: TextStyle(color: Colors.grey),
-                          )
-                        else
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: const [
-                                DataColumn(label: Text('Aluno')),
-                                DataColumn(label: Text('Estado')),
-                                DataColumn(label: Text('Leitura')),
-                              ],
-                              rows: checkins.map((checkin) {
-                                final studentName =
-                                    (checkin['student_name'] ?? 'Aluno')
-                                        .toString();
-                                final checkinStatus = (checkin['status'] ?? '-')
-                                    .toString();
-                                final readAt = _formatDateTime(
-                                  (checkin['read_at'] ?? checkin['created_at'])
-                                      ?.toString(),
-                                );
+                              'Nenhum check-in encontrado para este evento.',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text('Aluno')),
+                                  DataColumn(label: Text('Estado')),
+                                  DataColumn(label: Text('Leitura')),
+                                ],
+                                rows: checkins.map((checkin) {
+                                  final studentName =
+                                      (checkin['student_name'] ?? 'Aluno')
+                                          .toString();
+                                  final checkinStatus =
+                                      (checkin['status'] ?? '-').toString();
+                                  final readAt = _formatDateTime(
+                                    (checkin['read_at'] ??
+                                            checkin['created_at'])
+                                        ?.toString(),
+                                  );
 
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text(studentName)),
-                                    DataCell(
-                                      Text(
-                                        checkinStatus,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: _statusColor(checkinStatus),
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(studentName)),
+                                      DataCell(
+                                        Text(
+                                          checkinStatus,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: _statusColor(checkinStatus),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataCell(Text(readAt)),
-                                  ],
-                                );
-                              }).toList(),
+                                      DataCell(Text(readAt)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -617,7 +633,8 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
-      child: Card(
+      child: Container(
+        decoration: BrandTheme.softPanel(),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -666,10 +683,7 @@ class _ChartBarRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
             Text('$value ($percent%)'),
           ],
         ),

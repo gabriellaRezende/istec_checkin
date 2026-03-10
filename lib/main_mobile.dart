@@ -6,6 +6,7 @@ import 'package:istec_checkin/mobile/providers/app_state.dart';
 import 'package:istec_checkin/mobile/screens/login_screen.dart';
 import 'package:istec_checkin/mobile/screens/dashboard_screen.dart';
 import 'package:istec_checkin/mobile/screens/history_screen.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,20 +25,11 @@ class IstecApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppState()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AppState())],
       child: MaterialApp(
         title: 'ISTEC Check-in',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1A237E),
-            primary: const Color(0xFF1A237E),
-            secondary: Colors.blueAccent,
-          ),
-          useMaterial3: true,
-        ),
+        theme: BrandTheme.light(),
         home: const AuthWrapper(),
       ),
     );
@@ -51,9 +43,7 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final authState = context.watch<AppState>();
 
-    return authState.isLoggedIn
-        ? const MainNavigation()
-        : const LoginScreen();
+    return authState.isLoggedIn ? const MainNavigation() : const LoginScreen();
   }
 }
 
@@ -67,10 +57,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _screens = [
-    DashboardScreen(),
-    HistoryScreen(),
-  ];
+  static const List<Widget> _screens = [DashboardScreen(), HistoryScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -78,19 +65,21 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'Início',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history),
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history_rounded),
             label: 'Histórico',
           ),
         ],
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
       ),
     );
   }

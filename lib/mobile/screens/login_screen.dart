@@ -1,10 +1,9 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:istec_checkin/mobile/providers/app_state.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         await context
-            .read<AppState>().setLoggedIn(); // Atualiza o estado global para refletir o login
+            .read<AppState>()
+            .setLoggedIn(); // Atualiza o estado global para refletir o login
       } else {
         await AuthService.signUpStudent(
           fullName: _nameController.text.trim(),
@@ -74,9 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) {
@@ -94,168 +92,171 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Image.asset(
-                      'assets/images/istec_logo.png',
-                      width: 120,
-                      height: 120,
-                    ),
+      body: Container(
+        decoration: BrandTheme.heroBackground(),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Container(
+                  decoration: BrandTheme.softPanel(
+                    color: Colors.white.withValues(alpha: 0.95),
                   ),
-                  const SizedBox(height: 32),
-                  Text(
-                    _isLoginMode ? 'Entrar como Aluno' : 'Criar conta de Aluno',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isLoginMode
-                        ? 'Acesso destinado apenas a alunos.'
-                        : 'Use o email institucional @my.istec.pt.',
-                    style: const TextStyle(color: Colors.white70),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  if (!_isLoginMode) ...[
-                    TextFormField(
-                      controller: _nameController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Nome completo',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.badge, color: Colors.white70),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white30),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (_isLoginMode) return null;
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Informe o nome completo.';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Email institucional',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      prefixIcon: Icon(Icons.person, color: Colors.white70),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white30),
-                      ),
-                    ),
-                    validator: (value) {
-                      final email = value?.trim() ?? '';
-
-                      if (email.isEmpty) {
-                        return 'Informe o email.';
-                      }
-
-                      if (!AuthService.isInstitutionalEmail(email)) {
-                        return 'Use um email @my.istec.pt válido.';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      prefixIcon: const Icon(Icons.lock, color: Colors.white70),
-                      enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white30),
-                      ),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
-                    validator: (value) {
-                      final password = value?.trim() ?? '';
-
-                      if (password.isEmpty) {
-                        return 'Informe a password.';
-                      }
-
-                      if (!_isLoginMode && password.length < 6) {
-                        return 'Mínimo de 6 caracteres.';
-                      }
-
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: _isLoading ? null : _submit,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            _isLoginMode ? 'ENTRAR' : 'CRIAR CONTA',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: BrandTheme.mist,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Image.asset(
+                              'assets/images/istec_logo.png',
+                              width: 110,
+                              height: 110,
+                            ),
                           ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _isLoading ? null : _toggleMode,
-                    child: Text(
-                      _isLoginMode
-                          ? 'Ainda não tem conta? Criar conta de aluno'
-                          : 'Já tem conta? Entrar',
-                      style: const TextStyle(color: Colors.white),
-                      textAlign: TextAlign.center,
+                          const SizedBox(height: 28),
+                          Text(
+                            _isLoginMode
+                                ? 'Entrar como Aluno'
+                                : 'Criar conta de Aluno',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: BrandTheme.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _isLoginMode
+                                ? 'Acesso destinado apenas a alunos.'
+                                : 'Use o email institucional @my.istec.pt.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.black54,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 28),
+                          if (!_isLoginMode) ...[
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nome completo',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                              ),
+                              validator: (value) {
+                                if (_isLoginMode) return null;
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Informe o nome completo.';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Email institucional',
+                              prefixIcon: Icon(Icons.person_outline),
+                            ),
+                            validator: (value) {
+                              final email = value?.trim() ?? '';
+
+                              if (email.isEmpty) {
+                                return 'Informe o email.';
+                              }
+
+                              if (!AuthService.isInstitutionalEmail(email)) {
+                                return 'Use um email @my.istec.pt válido.';
+                              }
+
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _passController,
+                            obscureText: _obscurePassword,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              final password = value?.trim() ?? '';
+
+                              if (password.isEmpty) {
+                                return 'Informe a password.';
+                              }
+
+                              if (!_isLoginMode && password.length < 6) {
+                                return 'Mínimo de 6 caracteres.';
+                              }
+
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 28),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _submit,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      _isLoginMode ? 'ENTRAR' : 'CRIAR CONTA',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextButton(
+                            onPressed: _isLoading ? null : _toggleMode,
+                            child: Text(
+                              _isLoginMode
+                                  ? 'Ainda não tem conta? Criar conta de aluno'
+                                  : 'Já tem conta? Entrar',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),

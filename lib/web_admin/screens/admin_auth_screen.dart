@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 import 'package:istec_checkin/web_admin/screens/home_screen.dart';
 
 class AdminAuthScreen extends StatefulWidget {
@@ -94,148 +95,195 @@ class _AdminAuthScreenState extends State<AdminAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ISTEC Admin',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isLoginMode
-                            ? 'Entrar no painel administrativo'
-                            : 'Criar conta administrativa',
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      if (!_isLoginMode) ...[
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nome completo',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (_isLoginMode) return null;
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Informe o nome completo.';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email institucional',
-                          hintText: 'nome.sobrenome@my.istec.pt',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          final email = value?.trim() ?? '';
-
-                          if (email.isEmpty) {
-                            return 'Informe o email.';
-                          }
-
-                          if (!AuthService.isInstitutionalEmail(email)) {
-                            return 'Use um email @my.istec.pt válido.';
-                          }
-
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+      body: Container(
+        decoration: BrandTheme.screenBackground(),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(40),
+                      decoration: BrandTheme.softPanel(color: BrandTheme.navy),
+                      child: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ISTEC Admin',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                        validator: (value) {
-                          final password = value?.trim() ?? '';
-
-                          if (password.isEmpty) {
-                            return 'Informe a password.';
-                          }
-
-                          if (!_isLoginMode && password.length < 6) {
-                            return 'Mínimo de 6 caracteres.';
-                          }
-
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: _isLoading ? null : _submit,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    _isLoginMode
-                                        ? 'Entrar'
-                                        : 'Criar conta admin',
-                                  ),
+                          SizedBox(height: 14),
+                          Text(
+                            'Gestao simples de eventos com validação de presença. Tudo dentro do mesmo ecossistema.',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _toggleMode,
-                          child: Text(
-                            _isLoginMode
-                                ? 'Ainda não tem conta? Criar conta admin'
-                                : 'Já tem conta? Entrar',
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Container(
+                      decoration: BrandTheme.softPanel(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(28),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isLoginMode
+                                    ? 'Entrar no painel administrativo'
+                                    : 'Criar conta administrativa',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _isLoginMode
+                                    ? 'Use as credenciais institucionais para aceder.'
+                                    : 'Crie uma conta administrativa com email institucional.',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 24),
+                              if (!_isLoginMode) ...[
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nome completo',
+                                    prefixIcon: Icon(Icons.badge_outlined),
+                                  ),
+                                  validator: (value) {
+                                    if (_isLoginMode) return null;
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Informe o nome completo.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email institucional',
+                                  hintText: 'nome.sobrenome@my.istec.pt',
+                                  prefixIcon: Icon(Icons.person_outline),
+                                ),
+                                validator: (value) {
+                                  final email = value?.trim() ?? '';
+
+                                  if (email.isEmpty) {
+                                    return 'Informe o email.';
+                                  }
+
+                                  if (!AuthService.isInstitutionalEmail(
+                                    email,
+                                  )) {
+                                    return 'Use um email @my.istec.pt válido.';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  suffixIcon: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  final password = value?.trim() ?? '';
+
+                                  if (password.isEmpty) {
+                                    return 'Informe a password.';
+                                  }
+
+                                  if (!_isLoginMode && password.length < 6) {
+                                    return 'Mínimo de 6 caracteres.';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: _isLoading ? null : _submit,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Text(
+                                            _isLoginMode
+                                                ? 'Entrar'
+                                                : 'Criar conta admin',
+                                          ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextButton(
+                                  onPressed: _isLoading ? null : _toggleMode,
+                                  child: Text(
+                                    _isLoginMode
+                                        ? 'Ainda não tem conta? Criar conta admin'
+                                        : 'Já tem conta? Entrar',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

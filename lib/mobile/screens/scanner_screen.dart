@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:istec_checkin/mobile/providers/app_state.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 import 'package:istec_checkin/shared/utils/geo_helper.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -86,7 +87,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Check-in enviado'),
-          content: Text('O seu check-in para "$eventName" foi enviado para validação.'),
+          content: Text(
+            'O seu check-in para "$eventName" foi enviado para validação.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
@@ -113,7 +116,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   DateTime? _parseEventDateTime(String? rawDate, String? rawTime) {
-    if (rawDate == null || rawDate.isEmpty || rawTime == null || rawTime.isEmpty) {
+    if (rawDate == null ||
+        rawDate.isEmpty ||
+        rawTime == null ||
+        rawTime.isEmpty) {
       return null;
     }
 
@@ -234,8 +240,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           .maybeSingle();
 
       if (existingCheckin != null) {
-        final existingStatus =
-            (existingCheckin['status'] ?? 'pending').toString().toLowerCase();
+        final existingStatus = (existingCheckin['status'] ?? 'pending')
+            .toString()
+            .toLowerCase();
 
         String statusLabel;
         switch (existingStatus) {
@@ -301,12 +308,77 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scanner'),
-      ),
-      body: MobileScanner(
-        controller: _scannerController,
-        onDetect: _onDetect,
+      appBar: AppBar(title: const Text('Scanner')),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          MobileScanner(controller: _scannerController, onDetect: _onDetect),
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    BrandTheme.navy.withValues(alpha: 0.72),
+                    Colors.transparent,
+                    BrandTheme.navy.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BrandTheme.softPanel(
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.qr_code_scanner_rounded),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Aponte a câmara para o QR Code do evento.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 240,
+                    height: 240,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BrandTheme.softPanel(
+                      color: BrandTheme.navy.withValues(alpha: 0.82),
+                    ),
+                    child: const Text(
+                      'Mantenha o código dentro da área destacada para validar o check-in.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:istec_checkin/web_admin/screens/requests_screen.dart';
 import 'package:istec_checkin/web_admin/widgets/create_event_modal.dart';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -48,62 +49,79 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         return Dialog(
           child: SizedBox(
             width: 650,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Evento criado com sucesso',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            child: Container(
+              decoration: BrandTheme.softPanel(),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Evento criado com sucesso',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Nome: $name'),
+                              const SizedBox(height: 8),
+                              Text('Morada: $address'),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Início: $startDate às ${startTime.length >= 5 ? startTime.substring(0, 5) : startTime}',
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Fim: $endDate às ${endTime.length >= 5 ? endTime.substring(0, 5) : endTime}',
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Raio permitido: $radius metros'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Column(
                           children: [
-                            Text('Nome: $name'),
-                            const SizedBox(height: 8),
-                            Text('Morada: $address'),
-                            const SizedBox(height: 8),
-                            Text('Início: $startDate às ${startTime.length >= 5 ? startTime.substring(0,5) : startTime}'),
-                            const SizedBox(height: 8),
-                            Text('Fim: $endDate às ${endTime.length >= 5 ? endTime.substring(0,5) : endTime}'),
-                            const SizedBox(height: 8),
-                            Text('Raio permitido: $radius metros'),
+                            const Text(
+                              'QR Code',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: BrandTheme.mist,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: QrImageView(
+                                data: qrData,
+                                version: QrVersions.auto,
+                                size: 200,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 20),
-                      Column(
-                        children: [
-                          const Text(
-                            'QR Code',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 12),
-                          QrImageView(
-                            data: qrData,
-                            version: QrVersions.auto,
-                            size: 200,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Fechar'),
+                      ],
                     ),
-                  )
-                ],
+                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Fechar'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -176,97 +194,102 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
           final data = snapshot.data ?? _DashboardData.empty();
 
-          return RefreshIndicator(
-            onRefresh: _reloadDashboard,
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                const Text(
-                  'Visão Geral do Sistema',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Resumo de eventos e validação de presenças.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    DashboardMetricCard(
-                      title: 'Eventos Ativos',
-                      value: data.activeEvents.toString(),
-                      icon: Icons.event_available,
-                    ),
-                    DashboardMetricCard(
-                      title: 'Check-ins Hoje',
-                      value: data.checkinsToday.toString(),
-                      icon: Icons.qr_code_scanner,
-                    ),
-                    DashboardMetricCard(
-                      title: 'Aprovados',
-                      value: data.approvedCheckins.toString(),
-                      icon: Icons.check_circle_outline,
-                    ),
-                    DashboardMetricCard(
-                      title: 'Rejeitados',
-                      value: data.rejectedCheckins.toString(),
-                      icon: Icons.cancel_outlined,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Próximos Eventos',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (data.upcomingEvents.isEmpty)
+          return Container(
+            decoration: BrandTheme.screenBackground(),
+            child: RefreshIndicator(
+              onRefresh: _reloadDashboard,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const Text(
+                    'Visão Geral do Sistema',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Resumo de eventos e validação de presenças.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      DashboardMetricCard(
+                        title: 'Eventos Ativos',
+                        value: data.activeEvents.toString(),
+                        icon: Icons.event_available,
+                      ),
+                      DashboardMetricCard(
+                        title: 'Check-ins Hoje',
+                        value: data.checkinsToday.toString(),
+                        icon: Icons.qr_code_scanner,
+                      ),
+                      DashboardMetricCard(
+                        title: 'Aprovados',
+                        value: data.approvedCheckins.toString(),
+                        icon: Icons.check_circle_outline,
+                      ),
+                      DashboardMetricCard(
+                        title: 'Rejeitados',
+                        value: data.rejectedCheckins.toString(),
+                        icon: Icons.cancel_outlined,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  Container(
+                    decoration: BrandTheme.softPanel(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           const Text(
-                            'Nenhum próximo evento encontrado.',
-                            style: TextStyle(color: Colors.grey),
-                          )
-                        else
-                          ...data.upcomingEvents.map(
-                            (event) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const CircleAvatar(
-                                  child: Icon(Icons.event_note),
-                                ),
-                                title: Text(event.name),
-                                subtitle: Text(
-                                  '${event.formattedDate} às ${event.formattedTime}',
-                                ),
-                                trailing: Text(
-                                  event.status,
-                                  style: TextStyle(
-                                    color: event.status.toLowerCase() == 'active'
-                                        ? Colors.green
-                                        : Colors.grey,
-                                    fontWeight: FontWeight.w600,
+                            'Próximos Eventos',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (data.upcomingEvents.isEmpty)
+                            const Text(
+                              'Nenhum próximo evento encontrado.',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            ...data.upcomingEvents.map(
+                              (event) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const CircleAvatar(
+                                    child: Icon(Icons.event_note),
+                                  ),
+                                  title: Text(event.name),
+                                  subtitle: Text(
+                                    '${event.formattedDate} às ${event.formattedTime}',
+                                  ),
+                                  trailing: Text(
+                                    event.status,
+                                    style: TextStyle(
+                                      color:
+                                          event.status.toLowerCase() == 'active'
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -291,13 +314,22 @@ class DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 250,
-      child: Card(
+      child: Container(
+        decoration: BrandTheme.softPanel(),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 30),
+              Container(
+                height: 52,
+                width: 52,
+                decoration: BoxDecoration(
+                  color: BrandTheme.sky,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, size: 28, color: BrandTheme.navy),
+              ),
               const SizedBox(height: 16),
               Text(
                 value,
@@ -359,8 +391,9 @@ class _DashboardData {
       if (status != 'active') continue;
       if (rawEndDate == null || rawEndTime == null) continue;
 
-      final normalizedTime =
-          rawEndTime.length == 5 ? '$rawEndTime:00' : rawEndTime;
+      final normalizedTime = rawEndTime.length == 5
+          ? '$rawEndTime:00'
+          : rawEndTime;
 
       final endDateTime = DateTime.tryParse('${rawEndDate}T$normalizedTime');
 

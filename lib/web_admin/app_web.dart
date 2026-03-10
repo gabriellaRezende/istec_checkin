@@ -3,7 +3,7 @@ import 'package:istec_checkin/web_admin/screens/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:istec_checkin/web_admin/screens/admin_auth_screen.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
-
+import 'package:istec_checkin/shared/theme/brand_theme.dart';
 
 class AdminApp extends StatelessWidget {
   const AdminApp({super.key});
@@ -13,10 +13,7 @@ class AdminApp extends StatelessWidget {
     return MaterialApp(
       title: 'ISTEC Admin',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        useMaterial3: true,
-      ),
+      theme: BrandTheme.light(),
       home: const AdminAuthGate(),
     );
   }
@@ -110,38 +107,39 @@ class _UnauthorizedAdminAccess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_outline, size: 56),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Acesso não autorizado',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: BrandTheme.screenBackground(),
+        child: Center(
+          child: Container(
+            decoration: BrandTheme.softPanel(),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_outline, size: 56),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Acesso não autorizado',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await AuthService.signOut();
-                    },
-                    child: const Text('Sair'),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(message, textAlign: TextAlign.center),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await AuthService.signOut();
+                      },
+                      child: const Text('Sair'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

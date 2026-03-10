@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-
 class AdminSummaryCard extends StatelessWidget {
   final String title;
   final String description;
   final IconData icon;
 
   const AdminSummaryCard({
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
