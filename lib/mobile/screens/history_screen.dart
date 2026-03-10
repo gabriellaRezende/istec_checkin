@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -14,8 +13,23 @@ String formatDateTimePt(DateTime dt) {
 }
 
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      context.read<AppState>().refreshHistory();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +45,23 @@ class HistoryScreen extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final record = history[index];
+                final statusText = record.isApproved
+                    ? 'Aprovado'
+                    : record.isRejected
+                        ? 'Rejeitado'
+                        : 'Pendente';
+
+                final statusColor = record.isApproved
+                    ? Colors.green
+                    : record.isRejected
+                        ? Colors.red
+                        : Colors.orange;
+
+                final statusIcon = record.isApproved
+                    ? Icons.check_circle
+                    : record.isRejected
+                        ? Icons.cancel
+                        : Icons.hourglass_top;
                 return Card(
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -39,11 +70,27 @@ class HistoryScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     leading: Icon(
-                      record.isSuccess ? Icons.check_circle : Icons.error,
-                      color: record.isSuccess ? Colors.green : Colors.red,
+                      statusIcon,
+                      color: statusColor,
                     ),
-                    title: Text(record.code, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(formatDateTimePt(record.timestamp)),
+                    title: Text(
+                      record.code,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(formatDateTimePt(record.timestamp)),
+                      ],
+                    ),
                   ),
                 );
               },

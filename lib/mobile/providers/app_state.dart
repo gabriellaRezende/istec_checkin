@@ -105,7 +105,7 @@ class AppState with ChangeNotifier {
       'id': (row['id'] ?? '').toString(),
       'code': eventName,
       'location': location,
-      'isSuccess': status == 'approved',
+      'status': status.isEmpty ? 'pending' : status,
       'timestamp': (row['read_at'] ?? row['created_at'] ?? DateTime.now().toIso8601String()).toString(),
     });
   }

@@ -27,11 +27,13 @@ class _EventsScreenState extends State<EventsScreen> {
   Future<List<Map<String, dynamic>>> _loadEvents() async {
     final supabase = Supabase.instance.client;
 
+    await _expireFinishedEvents();
+
     final response = await supabase
         .from('events')
         .select()
-        .order('start_date', ascending: true)
-        .order('start_time', ascending: true);
+        .order('start_date', ascending: false)
+        .order('start_time', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);
   }
@@ -40,6 +42,40 @@ class _EventsScreenState extends State<EventsScreen> {
     setState(() {
       _eventsFuture = _loadEvents();
     });
+  }
+
+  Future<void> _expireFinishedEvents() async {
+    final supabase = Supabase.instance.client;
+
+    final response = await supabase
+        .from('events')
+        .select('id, end_date, end_time, status');
+
+    final events = List<Map<String, dynamic>>.from(response);
+    final now = DateTime.now();
+
+    for (final event in events) {
+      final status = (event['status'] ?? '').toString().toLowerCase();
+      final rawEndDate = event['end_date']?.toString();
+      final rawEndTime = event['end_time']?.toString();
+
+      if (status != 'active') continue;
+      if (rawEndDate == null || rawEndTime == null) continue;
+
+      final normalizedTime =
+          rawEndTime.length == 5 ? '$rawEndTime:00' : rawEndTime;
+
+      final endDateTime = DateTime.tryParse('${rawEndDate}T$normalizedTime');
+
+      if (endDateTime == null) continue;
+
+      if (now.isAfter(endDateTime)) {
+        await supabase
+            .from('events')
+            .update({'status': 'inactive'})
+            .eq('id', event['id']);
+      }
+    }
   }
 
   String _formatDate(String? raw) {
@@ -169,4 +205,5 @@ class _EventsScreenState extends State<EventsScreen> {
       ),
     );
   }
+
 }

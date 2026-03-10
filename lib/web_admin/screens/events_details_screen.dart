@@ -1,22 +1,21 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:typed_data';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
 import 'package:istec_checkin/web_admin/screens/home_screen.dart';
 import 'package:istec_checkin/web_admin/screens/events_screen.dart';
 import 'package:istec_checkin/web_admin/screens/requests_screen.dart';
 import 'package:istec_checkin/web_admin/widgets/top_navigation.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
 
-  const EventDetailScreen({
-    super.key,
-    required this.event,
-  });
+  const EventDetailScreen({super.key, required this.event});
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -101,6 +100,140 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   String get _qrData => 'ISTEC_EVENT:${widget.event['id']}';
 
+  double _safeRatio(int value, int total) {
+    if (total <= 0) return 0;
+    return value / total;
+  }
+
+  String _capitalizeStatus(String status) {
+    if (status.isEmpty) return '-';
+    final lower = status.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
+  }
+
+  Future<Uint8List> _buildPdfBytes({
+    required String name,
+    required String address,
+    required String startDate,
+    required String startTime,
+    required String endDate,
+    required String endTime,
+    required String status,
+    required String radius,
+    required int total,
+    required int approved,
+    required int rejected,
+    required int pending,
+    required List<Map<String, dynamic>> checkins,
+  }) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) => [
+          pw.Text(
+            'Relatório do Evento',
+            style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 16),
+          pw.Text('Nome: $name'),
+          pw.Text('Morada: $address'),
+          pw.Text('Início: $startDate às $startTime'),
+          pw.Text('Fim: $endDate às $endTime'),
+          pw.Text('Estado: $status'),
+          pw.Text('Raio permitido: $radius m'),
+          pw.SizedBox(height: 16),
+          pw.Text(
+            'Resumo',
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text('Total de check-ins: $total'),
+          pw.Text('Aprovados: $approved'),
+          pw.Text('Rejeitados: $rejected'),
+          pw.Text('Pendentes: $pending'),
+          pw.SizedBox(height: 20),
+          pw.Text(
+            'Lista de Check-ins',
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          if (checkins.isEmpty)
+            pw.Text('Nenhum check-in encontrado para este evento.')
+          else
+            pw.TableHelper.fromTextArray(
+              headers: const ['Aluno', 'Estado', 'Leitura'],
+              data: checkins.map((checkin) {
+                final studentName = (checkin['student_name'] ?? 'Aluno')
+                    .toString();
+                final checkinStatus = _capitalizeStatus(
+                  (checkin['status'] ?? '-').toString(),
+                );
+                final readAt = _formatDateTime(
+                  (checkin['read_at'] ?? checkin['created_at'])?.toString(),
+                );
+
+                return [studentName, checkinStatus, readAt];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.all(6),
+            ),
+        ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  Future<void> _exportPdf({
+    required String name,
+    required String address,
+    required String startDate,
+    required String startTime,
+    required String endDate,
+    required String endTime,
+    required String status,
+    required String radius,
+    required int total,
+    required int approved,
+    required int rejected,
+    required int pending,
+    required List<Map<String, dynamic>> checkins,
+  }) async {
+    try {
+      final bytes = await _buildPdfBytes(
+        name: name,
+        address: address,
+        startDate: startDate,
+        startTime: startTime,
+        endDate: endDate,
+        endTime: endTime,
+        status: status,
+        radius: radius,
+        total: total,
+        approved: approved,
+        rejected: rejected,
+        pending: pending,
+        checkins: checkins,
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (_) async => bytes,
+        name: 'relatorio_evento_${widget.event['id']}.pdf',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao exportar PDF: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = (widget.event['name'] ?? 'Evento').toString();
@@ -149,15 +282,32 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
           if (snapshot.hasError) {
             return Center(
-              child: Text('Erro ao carregar detalhe do evento: ${snapshot.error}'),
+              child: Text(
+                'Erro ao carregar detalhe do evento: ${snapshot.error}',
+              ),
             );
           }
 
           final checkins = snapshot.data ?? [];
           final total = checkins.length;
-          final approved = checkins.where((c) => (c['status'] ?? '').toString().toLowerCase() == 'approved').length;
-          final rejected = checkins.where((c) => (c['status'] ?? '').toString().toLowerCase() == 'rejected').length;
-          final pending = checkins.where((c) => (c['status'] ?? '').toString().toLowerCase() == 'pending').length;
+          final approved = checkins
+              .where(
+                (c) =>
+                    (c['status'] ?? '').toString().toLowerCase() == 'approved',
+              )
+              .length;
+          final rejected = checkins
+              .where(
+                (c) =>
+                    (c['status'] ?? '').toString().toLowerCase() == 'rejected',
+              )
+              .length;
+          final pending = checkins
+              .where(
+                (c) =>
+                    (c['status'] ?? '').toString().toLowerCase() == 'pending',
+              )
+              .length;
 
           return RefreshIndicator(
             onRefresh: _reload,
@@ -184,9 +334,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               ),
                               const SizedBox(height: 12),
                               _InfoRow(label: 'Morada', value: address),
-                              _InfoRow(label: 'Início', value: '$startDate às $startTime'),
-                              _InfoRow(label: 'Fim', value: '$endDate às $endTime'),
-                              _InfoRow(label: 'Raio permitido', value: '$radius m'),
+                              _InfoRow(
+                                label: 'Início',
+                                value: '$startDate às $startTime',
+                              ),
+                              _InfoRow(
+                                label: 'Fim',
+                                value: '$endDate às $endTime',
+                              ),
+                              _InfoRow(
+                                label: 'Raio permitido',
+                                value: '$radius m',
+                              ),
                               _InfoRow(label: 'Latitude', value: latitude),
                               _InfoRow(label: 'Longitude', value: longitude),
                               const SizedBox(height: 8),
@@ -194,7 +353,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 children: [
                                   const Text(
                                     'Estado: ',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                   Text(
                                     status,
@@ -246,21 +407,76 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 const SizedBox(height: 24),
                 const Text(
                   'Resumo do Evento',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 16,
                   runSpacing: 16,
                   children: [
-                    _SummaryCard(title: 'Total', value: total.toString(), color: Colors.blue),
-                    _SummaryCard(title: 'Aprovados', value: approved.toString(), color: Colors.green),
-                    _SummaryCard(title: 'Rejeitados', value: rejected.toString(), color: Colors.red),
-                    _SummaryCard(title: 'Pendentes', value: pending.toString(), color: Colors.orange),
+                    _SummaryCard(
+                      title: 'Total',
+                      value: total.toString(),
+                      color: Colors.blue,
+                    ),
+                    _SummaryCard(
+                      title: 'Aprovados',
+                      value: approved.toString(),
+                      color: Colors.green,
+                    ),
+                    _SummaryCard(
+                      title: 'Rejeitados',
+                      value: rejected.toString(),
+                      color: Colors.red,
+                    ),
+                    _SummaryCard(
+                      title: 'Pendentes',
+                      value: pending.toString(),
+                      color: Colors.orange,
+                    ),
                   ],
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Gráfico de Check-ins',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _ChartBarRow(
+                          label: 'Aprovados',
+                          value: approved,
+                          total: total,
+                          color: Colors.green,
+                          ratio: _safeRatio(approved, total),
+                        ),
+                        const SizedBox(height: 12),
+                        _ChartBarRow(
+                          label: 'Rejeitados',
+                          value: rejected,
+                          total: total,
+                          color: Colors.red,
+                          ratio: _safeRatio(rejected, total),
+                        ),
+                        const SizedBox(height: 12),
+                        _ChartBarRow(
+                          label: 'Pendentes',
+                          value: pending,
+                          total: total,
+                          color: Colors.orange,
+                          ratio: _safeRatio(pending, total),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Card(
@@ -280,11 +496,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               ),
                             ),
                             OutlinedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Exportar PDF será o próximo passo.'),
-                                  ),
+                              onPressed: () async {
+                                await _exportPdf(
+                                  name: name,
+                                  address: address,
+                                  startDate: startDate,
+                                  startTime: startTime,
+                                  endDate: endDate,
+                                  endTime: endTime,
+                                  status: status,
+                                  radius: radius,
+                                  total: total,
+                                  approved: approved,
+                                  rejected: rejected,
+                                  pending: pending,
+                                  checkins: checkins,
                                 );
                               },
                               icon: const Icon(Icons.picture_as_pdf),
@@ -308,10 +534,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 DataColumn(label: Text('Leitura')),
                               ],
                               rows: checkins.map((checkin) {
-                                final studentName = (checkin['student_name'] ?? 'Aluno').toString();
-                                final checkinStatus = (checkin['status'] ?? '-').toString();
+                                final studentName =
+                                    (checkin['student_name'] ?? 'Aluno')
+                                        .toString();
+                                final checkinStatus = (checkin['status'] ?? '-')
+                                    .toString();
                                 final readAt = _formatDateTime(
-                                  (checkin['read_at'] ?? checkin['created_at'])?.toString(),
+                                  (checkin['read_at'] ?? checkin['created_at'])
+                                      ?.toString(),
                                 );
 
                                 return DataRow(
@@ -349,10 +579,7 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -405,14 +632,58 @@ class _SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.grey),
-              ),
+              Text(title, style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ChartBarRow extends StatelessWidget {
+  final String label;
+  final int value;
+  final int total;
+  final Color color;
+  final double ratio;
+
+  const _ChartBarRow({
+    required this.label,
+    required this.value,
+    required this.total,
+    required this.color,
+    required this.ratio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = total > 0 ? (ratio * 100).toStringAsFixed(0) : '0';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text('$value ($percent%)'),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 14,
+            color: color,
+            backgroundColor: Colors.grey.shade300,
+          ),
+        ),
+      ],
     );
   }
 }

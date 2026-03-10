@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:istec_checkin/mobile/providers/app_state.dart';
-import 'package:istec_checkin/shared/models/check_in.dart';
 import 'package:istec_checkin/shared/services/auth_service.dart';
 import 'package:istec_checkin/shared/utils/geo_helper.dart';
 
@@ -86,8 +85,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       barrierDismissible: false,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Check-in registado'),
-          content: Text('A sua presença foi registada com sucesso em "$eventName".'),
+          title: const Text('Check-in enviado'),
+          content: Text('O seu check-in para "$eventName" foi enviado para validação.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
@@ -227,6 +226,36 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final studentEmail = (user?.email ?? '').toString();
       final address = (event['adress'] ?? '').toString();
 
+      final existingCheckin = await supabase
+          .from('checkins')
+          .select('id, status')
+          .eq('event_id', eventId)
+          .eq('student_email', studentEmail)
+          .maybeSingle();
+
+      if (existingCheckin != null) {
+        final existingStatus =
+            (existingCheckin['status'] ?? 'pending').toString().toLowerCase();
+
+        String statusLabel;
+        switch (existingStatus) {
+          case 'approved':
+            statusLabel = 'aprovado';
+            break;
+          case 'rejected':
+            statusLabel = 'rejeitado';
+            break;
+          default:
+            statusLabel = 'pendente';
+        }
+
+        await _showError(
+          'Check-in já realizado',
+          'Você já realizou o check-in para este evento. Estado atual: $statusLabel.',
+        );
+        return;
+      }
+
       await supabase.from('checkins').insert({
         'event_id': eventId,
         'student_name': studentName,
@@ -241,18 +270,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
       });
 
       if (!mounted) return;
-
-      await context.read<AppState>().addRecord(
-            CheckInRecord(
-              id: eventId,
-              code: eventName,
-              timestamp: DateTime.now(),
-              location: address.isNotEmpty
-                  ? address
-                  : '${pos.latitude.toStringAsFixed(6)},${pos.longitude.toStringAsFixed(6)}',
-              isSuccess: true,
-            ),
-          );
 
       await context.read<AppState>().refreshHistory();
 

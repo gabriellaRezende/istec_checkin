@@ -4,28 +4,35 @@ class CheckInRecord {
   final String code;
   final DateTime timestamp;
   final String location;
-  final bool isSuccess;
+  final String status;
+
 
   CheckInRecord({
     required this.id,
     required this.code,
     required this.timestamp,
     required this.location,
-    required this.isSuccess,
+    required this.status,
   });
+
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isRejected => status.toLowerCase() == 'rejected';
+  bool get isPending => status.toLowerCase() == 'pending';
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'timestamp': timestamp.toIso8601String(),
     'location': location,
-    'isSuccess': isSuccess,
+    'staus': status,
   };
 
-  factory CheckInRecord.fromJson(Map<String, dynamic> json) => CheckInRecord(
-    id: json['id'] ?? '',
-    code: json['code'] ?? '',
+  factory CheckInRecord.fromJson(Map<String, dynamic> json){
+    return CheckInRecord(
+      id: json['id'] ?? '',
+      code: json['code'] ?? '',
     timestamp: DateTime.parse(json['timestamp']),
     location: json['location'] ?? '',
-    isSuccess: json['isSuccess'] ?? false,
-  );
+    status: (json['status'] ?? 'pending' ).toString(),
+    );
+  }
 }
