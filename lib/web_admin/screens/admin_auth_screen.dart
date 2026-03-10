@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:istec_checkin/shared/services/auth_service.dart';
+import 'package:istec_checkin/web_admin/screens/home_screen.dart';
 
 class AdminAuthScreen extends StatefulWidget {
   const AdminAuthScreen({super.key});
@@ -44,6 +45,10 @@ class _AdminAuthScreenState extends State<AdminAuthScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login realizado com sucesso.')),
+        );
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
         );
       } else {
         await AuthService.signUpAdmin(
