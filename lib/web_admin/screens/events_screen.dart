@@ -29,7 +29,7 @@ class EventsScreen extends StatelessWidget {
           );
         },
         onSignOut: () async {
-          await AuthService.signOut();
+          await AuthService.signOutAndRedirect(context);
         },
       ),
       body: FutureBuilder(
@@ -42,9 +42,7 @@ class EventsScreen extends StatelessWidget {
           final events = snapshot.data as List;
 
           if (events.isEmpty) {
-            return const Center(
-              child: Text("Nenhum evento cadastrado."),
-            );
+            return const Center(child: Text("Nenhum evento cadastrado."));
           }
 
           return ListView.builder(

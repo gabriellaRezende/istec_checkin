@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
+import 'package:istec_checkin/web_admin/screens/admin_auth_screen.dart';
 
 class AuthService {
   AuthService._();
@@ -9,7 +11,6 @@ class AuthService {
 
   static bool isInstitutionalEmail(String email) {
     final normalized = email.trim().toLowerCase();
-
     final regex = RegExp(r'^[a-zA-Z0-9._-]+@my\.istec\.pt$');
     return regex.hasMatch(normalized);
   }
@@ -78,30 +79,23 @@ class AuthService {
 
       if (role == 'student') {
         throw Exception(
-          'Este email já está registado como utilizador administrativo. O registo no app é apenas para alunos.',
+          'Este email já está registado como utilizador administrativo.',
         );
       }
 
-      throw Exception(
-        'Este email já está registado como aluno. O painel web é apenas para utilizadores autorizados.',
-      );
+      throw Exception('Este email já está registado como aluno.');
     }
 
     final response = await _supabase.auth.signUp(
       email: normalizedEmail,
       password: password,
-      data: {
-        'full_name': normalizedName,
-        'role': role,
-      },
+      data: {'full_name': normalizedName, 'role': role},
     );
 
     final user = response.user;
 
     if (user == null) {
-      throw Exception(
-        'Não foi possível concluir o registo neste momento. Tente novamente.',
-      );
+      throw Exception('Não foi possível concluir o registo neste momento.');
     }
 
     await _supabase.from('profiles').insert({
@@ -155,14 +149,10 @@ class AuthService {
       await _supabase.auth.signOut();
 
       if (expectedRole == 'student') {
-        throw Exception(
-          'Este acesso é destinado apenas a alunos. Utilize o painel correto.',
-        );
+        throw Exception('Este acesso é destinado apenas a alunos.');
       }
 
-      throw Exception(
-        'Este acesso é destinado apenas a administradores autorizados.',
-      );
+      throw Exception('Este acesso é destinado apenas a administradores.');
     }
 
     return response;
@@ -184,5 +174,16 @@ class AuthService {
 
   static Future<void> signOut() async {
     await _supabase.auth.signOut();
+  }
+
+  static Future<void> signOutAndRedirect(BuildContext context) async {
+    await _supabase.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const AdminAuthScreen()),
+      (route) => false,
+    );
   }
 }

@@ -13,25 +13,25 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: TopNavigation(
-  title: 'ISTEC Admin',
-  currentSection: AdminSection.dashboard,
-  onDashboard: () {},
-  onEvents: () {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => const EventsScreen()),
-  );
-},
-  onRequests: () {
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => const RequestsScreen()),
-  );
-},
-  onSignOut: () async {
-    await AuthService.signOut();
-  },
-),
+        title: 'ISTEC Admin',
+        currentSection: AdminSection.dashboard,
+        onDashboard: () {},
+        onEvents: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const EventsScreen()),
+          );
+        },
+        onRequests: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const RequestsScreen()),
+          );
+        },
+        onSignOut: () async {
+          await AuthService.signOutAndRedirect(context);
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -47,9 +47,7 @@ class AdminHomeScreen extends StatelessWidget {
         future: _DashboardData.load(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -73,10 +71,7 @@ class AdminHomeScreen extends StatelessWidget {
               children: [
                 const Text(
                   'Visão Geral do Sistema',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -146,7 +141,8 @@ class AdminHomeScreen extends StatelessWidget {
                                 trailing: Text(
                                   event.status,
                                   style: TextStyle(
-                                    color: event.status.toLowerCase() == 'active'
+                                    color:
+                                        event.status.toLowerCase() == 'active'
                                         ? Colors.green
                                         : Colors.grey,
                                     fontWeight: FontWeight.w600,
@@ -200,10 +196,7 @@ class DashboardMetricCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.grey),
-              ),
+              Text(title, style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),

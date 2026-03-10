@@ -29,14 +29,11 @@ class RequestsScreen extends StatelessWidget {
         },
         onRequests: () {},
         onSignOut: () async {
-          await AuthService.signOut();
+          await AuthService.signOutAndRedirect(context);
         },
       ),
       body: FutureBuilder(
-        future: supabase
-            .from('checkins')
-            .select()
-            .eq('status', 'pending'),
+        future: supabase.from('checkins').select().eq('status', 'pending'),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -45,9 +42,7 @@ class RequestsScreen extends StatelessWidget {
           final checkins = snapshot.data as List;
 
           if (checkins.isEmpty) {
-            return const Center(
-              child: Text("Nenhuma solicitação pendente."),
-            );
+            return const Center(child: Text("Nenhuma solicitação pendente."));
           }
 
           return ListView.builder(

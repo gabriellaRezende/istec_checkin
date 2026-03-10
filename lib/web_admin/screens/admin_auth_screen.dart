@@ -43,9 +43,7 @@ class _AdminAuthScreenState extends State<AdminAuthScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login realizado com sucesso.'),
-          ),
+          const SnackBar(content: Text('Login realizado com sucesso.')),
         );
       } else {
         await AuthService.signUpAdmin(
@@ -73,9 +71,7 @@ class _AdminAuthScreenState extends State<AdminAuthScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) {
