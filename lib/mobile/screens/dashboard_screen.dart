@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:istec_checkin/shared/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:istec_checkin/mobile/providers/app_state.dart';
 import 'package:istec_checkin/shared/theme/brand_theme.dart';
@@ -56,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ISTEC Check-in'),
+        title: const Text('ISTEC Scan'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -88,22 +89,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Bem-vindo, Aluno ISTEC',
-                          style: TextStyle(
+                          'Bem-vindo, ${AuthService.currentUser?.userMetadata? ['full_name'] ?? 'Usuário'}',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'ID: 2024517',
-                          style: TextStyle(color: Colors.white70),
                         ),
                       ],
                     ),
