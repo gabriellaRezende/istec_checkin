@@ -411,14 +411,14 @@ class _CreateEventModalState extends State<CreateEventModal> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _pickStartDate,
-                        child: Text('Início: ${_displayDate(_startDate)}'),
+                        child: Text('Data Início: ${_displayDate(_startDate)}'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _pickStartTime,
-                        child: Text('Hora: ${_displayTime(_startTime)}'),
+                        child: Text('Hora do checkin: ${_displayTime(_startTime)}'),
                       ),
                     ),
                   ],
@@ -429,14 +429,14 @@ class _CreateEventModalState extends State<CreateEventModal> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _pickEndDate,
-                        child: Text('Fim: ${_displayDate(_endDate)}'),
+                        child: Text('Data Fim: ${_displayDate(_endDate)}'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _pickEndTime,
-                        child: Text('Hora: ${_displayTime(_endTime)}'),
+                        child: Text('Hora do encerramento: ${_displayTime(_endTime)}'),
                       ),
                     ),
                   ],

@@ -69,7 +69,7 @@ class DashboardScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.check_circle, color: Colors.green),
                 title: Text(
-                  history.first.id,
+                  history.first.code,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(formatDateTimePt(history.first.timestamp)),

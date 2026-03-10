@@ -1,67 +1,112 @@
-
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../shared/models/check_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// AppState é a classe que gerencia o estado global da aplicação, incluindo o status de autenticação do usuário e o histórico de check-ins. Ela utiliza ChangeNotifier para notificar os widgets que dependem desses dados quando houver mudanças, permitindo uma atualização reativa da interface do usuário.
+import 'package:istec_checkin/shared/models/check_in.dart';
+import 'package:istec_checkin/shared/services/auth_service.dart';
+
 class AppState with ChangeNotifier {
-  bool _isLoggedIn = false;
+  bool _isLoggedIn = AuthService.currentUser != null;
   List<CheckInRecord> _history = [];
-  
+
   bool get isLoggedIn => _isLoggedIn;
   List<CheckInRecord> get history => _history;
 
   AppState() {
-    _loadHistory(); // Carrega o histórico de check-ins do armazenamento local quando a aplicação é iniciada.
+    _bootstrap();
   }
 
-  //Gerencia o processo de login. Apenas simula a autenticação e verifica se o campo de ID e senha estão vazios. 
-  // Se estiver preenchido >> Login bem sucedido
-  // Se estiver vazio >> Login falhou
-  void login(String id, String pass) {
-    if (id.isNotEmpty && pass.isNotEmpty) {
-      _isLoggedIn = true;
-      notifyListeners(); //Aqui vai notificar os widgets que dependem da resposta do login para atualizar a interface.
+  Future<void> _bootstrap() async {
+    _isLoggedIn = AuthService.currentUser != null;
+
+    if (_isLoggedIn) {
+      await refreshHistory();
+    } else {
+      _history = [];
+      notifyListeners();
     }
   }
 
-  //Gerencia o logout. Muda o estado de login para false e notifica os widgets para alterar a interface de volta para o login screen.
+  Future<void> setLoggedIn() async {
+    _isLoggedIn = true;
+    notifyListeners();
+    await refreshHistory();
+  }
+
   void logout() {
     _isLoggedIn = false;
+    _history = [];
     notifyListeners();
   }
 
-  //Caso o novo registro de check-in for bem sucedido, ou seja, ele for válido, então adiciona na lista de hitórico e salva localmente.
-  void addRecord(CheckInRecord record) {
+  Future<void> addRecord(CheckInRecord record) async {
     _history.insert(0, record);
-    _saveHistory(); // Salva o histórico atualizado no armazenamento local.
-    notifyListeners(); //Notifica os widgets para alterar o hitórico.
+    notifyListeners();
   }
 
-  //Carrega o histórico do armazenamento local. 
-  Future<void> _loadHistory() async {
+  Future<void> refreshHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? historyData = prefs.getString('history');
-      if (historyData != null && historyData.isNotEmpty) {
-        final List decoded = jsonDecode(historyData);
-        _history = decoded.map((item) => CheckInRecord.fromJson(item)).toList(); //Converte os dados locais para a lista de registos
-        notifyListeners(); //Notifica o widget responsável para a tualizar a interface do histórico exatamente com os dados que estão salvos localmente.
+      final user = AuthService.currentUser;
+
+      if (user == null) {
+        _history = [];
+        notifyListeners();
+        return;
       }
+
+      final supabase = Supabase.instance.client;
+      List<Map<String, dynamic>> rows = [];
+
+      try {
+        final response = await supabase
+            .from('checkins')
+            .select('id,status,created_at,read_at,event_id,student_name,student_email,events(name,adress)')
+            .eq('student_email', user.email ?? '')
+            .order('created_at', ascending: false);
+
+        rows = List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        final profile = await AuthService.getCurrentProfile();
+        final fullName = (profile?['full_name'] ?? '').toString();
+
+        if (fullName.isNotEmpty) {
+          final response = await supabase
+              .from('checkins')
+              .select('id,status,created_at,read_at,event_id,student_name,event_name,event_address')
+              .eq('student_name', fullName)
+              .order('created_at', ascending: false);
+
+          rows = List<Map<String, dynamic>>.from(response);
+        }
+      }
+
+      _history = rows.map(_mapCheckInRecord).toList();
+      notifyListeners();
     } catch (e) {
-      debugPrint('Erro ao carregar histórico: $e');
-    } //catch para tratar erro caso exista algum problema ao acessar o histórico.
+      debugPrint('Erro ao carregar histórico do Supabase: $e');
+    }
   }
 
-  // Salva o histórico atualizado localmente. 
-  Future<void> _saveHistory() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String encoded = jsonEncode(_history.map((e) => e.toJson()).toList());
-      await prefs.setString('history', encoded);
-    } catch (e) {
-      debugPrint('Erro ao salvar histórico: $e');
+  CheckInRecord _mapCheckInRecord(Map<String, dynamic> row) {
+    final status = (row['status'] ?? '').toString().toLowerCase();
+    final relatedEvent = row['events'];
+
+    String eventName = 'Evento';
+    String location = '';
+
+    if (relatedEvent is Map<String, dynamic>) {
+      eventName = (relatedEvent['name'] ?? 'Evento').toString();
+      location = (relatedEvent['adress'] ?? '').toString();
+    } else {
+      eventName = (row['event_name'] ?? row['event_id'] ?? 'Evento').toString();
+      location = (row['event_address'] ?? row['adress'] ?? '').toString();
     }
+
+    return CheckInRecord.fromJson({
+      'id': (row['id'] ?? '').toString(),
+      'code': eventName,
+      'location': location,
+      'isSuccess': status == 'approved',
+      'timestamp': (row['read_at'] ?? row['created_at'] ?? DateTime.now().toIso8601String()).toString(),
+    });
   }
 }

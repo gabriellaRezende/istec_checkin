@@ -42,9 +42,8 @@ class HistoryScreen extends StatelessWidget {
                       record.isSuccess ? Icons.check_circle : Icons.error,
                       color: record.isSuccess ? Colors.green : Colors.red,
                     ),
-                    title: Text(record.id, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(record.code, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(formatDateTimePt(record.timestamp)),
-                    trailing: const Icon(Icons.chevron_right),
                   ),
                 );
               },
